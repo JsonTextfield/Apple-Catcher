@@ -11,34 +11,23 @@ _______________/      /     ______/    _________/_|     \    |
      \__________/___________/
 """
 
-
 from __future__ import division
-import math
-import random
-import sys
-import pygame
-import os
-import time
+import math, random, sys, pygame, os, time, operator
 
 class Apple(object):
-    def __init__(self, position, direction, image):
+    def __init__(self, position, direction, image): #constructor
         self.position = position
         self.direction = direction
         self.image = image
 
     def update(self):
-        self.position = self.position[0]+self.direction[0], \
-                        self.position[1]+self.direction[1]
+        self.position = self.position[0]+self.direction[0], self.position[1]+self.direction[1]
         self.direction = self.direction[0], self.direction[1] + 1/5
 
     def draw(self, surface):
         rect = self.image.get_rect()
-        rect = rect.move(int(self.position[0]) - rect.width//2, \
-                         int(self.position[1]) - rect.height//2)
+        rect = rect.move(int(self.position[0]) - rect.width//2, int(self.position[1]) - rect.height//2)
         surface.blit(self.image, rect)
-
-    def radius(self):
-        return self.image.get_height()
 
 class MyGame(object):        
     
@@ -47,7 +36,7 @@ class MyGame(object):
     
     PLAYING, DYING, GAME_OVER, STARTING, HIGHSCORES = range(5)
         
-        
+
     def __init__(self):
         """Initialize a new game"""
         mixer.init()
@@ -61,30 +50,34 @@ class MyGame(object):
             self.size = (500, 700)
         self.width, self.height = self.size
         self.screen = pygame.display.set_mode(self.size)
-        self.bg_color = ((random.randint(0,255)),(random.randint(0,255)),
-                        (random.randint(0,255)))
+        self.bg_color = ((random.randint(0,255)),(random.randint(0,255)),(random.randint(0,255)))
         if self.bg_color[0] > 200 and self.bg_color[1] > 200 \
         and self.bg_color[2] > 200 or self.bg_color[0] > 230 \
         and self.bg_color[1] < 40 and self.bg_color[2] < 40:
-            self.bg_color = ((random.randint(0,255)),(random.randint(0,255)),
-                        (random.randint(0,255)))
+            self.bg_color = ((random.randint(0,255)),(random.randint(0,255)),(random.randint(0,255)))
         self.score = 0
         self.level = 1
         
         #loads fonts
-        self.font = pygame.font.SysFont(None, 50)
-        self.gamefont = pygame.font.Font("webster.ttf", 20)
-        self.game_over_font = pygame.font.Font("webster.ttf", 50)
-        self.title_font = pygame.font.Font("Alpha Romanie G98.ttf", 80)
-        self.score_font = pygame.font.Font("Alpha Romanie G98.ttf", 20)
-        
+        if android:
+            self.font = pygame.font.SysFont(None, self.width//10)
+            self.gamefont = pygame.font.Font("webster.ttf", self.width//23)
+            self.game_over_font = pygame.font.Font("webster.ttf", self.width//10)
+            self.title_font = pygame.font.Font("Alpha Romanie G98.ttf", self.width//7)
+            self.score_font = pygame.font.Font("Alpha Romanie G98.ttf", self.width//15)
+        else:
+            self.font = pygame.font.SysFont(None, 50)
+            self.gamefont = pygame.font.Font("webster.ttf", 20)
+            self.game_over_font = pygame.font.Font("webster.ttf", 50)
+            self.title_font = pygame.font.Font("Alpha Romanie G98.ttf", 80)
+            self.score_font = pygame.font.Font("Alpha Romanie G98.ttf", 20)
+            
         # load images
         self.apple = pygame.image.load('apple1.png')
         self.apples = set()      
         self.basket = pygame.image.load("basket2.png")
         
         #load sounds
-        
         self.bgm = mixer.Sound("bgm.wav")
         self.basket_snd = mixer.Sound("basketed.wav")
         self.levelup = mixer.Sound("LevelUp.wav")
@@ -92,18 +85,17 @@ class MyGame(object):
         self.bgm.set_volume(.3)
         #self.bgm.play(-1, 0, 2000)
         
-        self.title = self.title_font.render("Apple Catcher", True, \
-                                           (255,200,100))
+        self.title = self.title_font.render("Apple Catcher", True, (255,200,100)) #title
         self.playgame_txt = self.gamefont.render('Click to Play', 
-        True, (255,255,255))
+        True, (255,255,255)) #button
         self.high_txt = self.gamefont.render('High Scores', 
-        True, (255,255,255))
+        True, (255,255,255)) #hs title
         
         self.start_time = pygame.time.get_ticks()
         self.state = MyGame.STARTING
         self.timeout = 30
-        self.quota = 25
-        self.quota_inc = 27
+        self.quota = 25 #?
+        self.quota_inc = 10 #?
 
         # Setup a timer to refresh the display FPS times per second
         self.FPS = 30
@@ -112,24 +104,37 @@ class MyGame(object):
         pygame.time.set_timer(MyGame.REFRESH, 1000//self.FPS)
         
         self.recttext = self.playgame_txt.get_rect()
-        self.hs = self.high_txt.get_rect()
+        self.hs = self.high_txt.get_rect() #hs's rectangle
         self.title_rect = self.title.get_rect()
+        self.scores = []
+        try:
+            open('scores.txt','r+')   # Trying to create a new file or open one
+
+        except:
+            file = open('scores.txt', 'w')
+            file.close()
+        try:
+            open('names.txt','r+')   # Trying to create a new file or open one
+
+        except:
+            file = open('names.txt', 'w')
+            file.close()
         
-        self.scores = self.score_font.render("%s" %(str(open("scores.txt","r").read().upper().split("-")).replace("\"]","")), True, (255,255,255))
-        #self.scores = self.score_font.render("-Tommy 145\n-Billy 152\n-Mandy 139\n-Bobby 172-",True,(255,255,255))
-        #.replace("[",""),True, (255,255,255))
-        
-    
-        self.myrect = self.scores.get_rect()
-        self.sell = self.gamefont.render('Main Menu', 
-                    True, (255,255,255))
-        self.retrect = self.sell.get_rect()
+        with open('scores.txt') as f:
+            for line in f:
+                line = line.split() # to deal with blank 
+                if line:            # lines (ie skip them)
+                    line = [int(i) for i in line]
+                    self.scores.append(int(i))
+        self.back = self.gamefont.render('Main Menu', True, (255,255,255))
+        self.back_rect = self.back.get_rect()
+        self.pos = self.width//2
     def restart(self):
         self.level = 1
         self.score = 0
         self.timeout = 30
         self.quota = 25
-        self.quota_inc = 27
+        self.quota_inc = 10
         self.start()
         return self.timeout
         
@@ -137,7 +142,7 @@ class MyGame(object):
         self.apples = set()
         self.new_apple()
         """Start playing (again)"""
-        self.bgm.play(-1)
+        self.bgm.play(-1, 0, 2000)
         self.start_time = pygame.time.get_ticks()
         self.state = MyGame.PLAYING
         
@@ -145,19 +150,20 @@ class MyGame(object):
     def run(self):
         """Loop forever processing events"""
         running = True
-
         while running:
+            if mixer:
+                if mixer.music.get_busy() == False and self.state == MyGame.PLAYING:
+                    if android:
+                        self.bgm.play()
             if self.bg_color[0] > 200 and self.bg_color[1] > 200 \
             and self.bg_color[2] > 200 or self.bg_color[0] > 230 \
             and self.bg_color[1] < 40 and self.bg_color[2] < 40:
                 self.bg_color = ((random.randint(0,255)),(random.randint(0,255)),
                         (random.randint(0,255)))
             event = pygame.event.wait()
-            
             if android:
                 if android.check_pause():
                     android.wait_for_resume()
-            
             if event.type == pygame.USEREVENT+6:
                 self.new_apple()
             # time to draw a new frame
@@ -173,10 +179,10 @@ class MyGame(object):
                     and self.state == MyGame.STARTING:
                 self.restart()
                 
-            elif event.type == pygame.MOUSEBUTTONDOWN and self.hs.collidepoint(pygame.mouse.get_pos()):
+            elif event.type == pygame.MOUSEBUTTONDOWN and self.hs.collidepoint(pygame.mouse.get_pos()) and self.state != MyGame.PLAYING:
                 self.state = MyGame.HIGHSCORES
                
-            elif event.type == pygame.MOUSEBUTTONDOWN and self.retrect.collidepoint(pygame.mouse.get_pos()):
+            elif event.type == pygame.MOUSEBUTTONDOWN and self.back_rect.collidepoint(pygame.mouse.get_pos()):
                 self.state = MyGame.STARTING
                     
             elif event.type == MyGame.RESTART:
@@ -192,6 +198,7 @@ class MyGame(object):
         Play game over sound and wait for it to end before restarting.
         """
         self.state = MyGame.GAME_OVER
+        
         self.screen.fill(0)
         game_over =  self.game_over_font.render("Game Over", True, (255, 0, 0))
         game_over_rect = game_over.get_rect()
@@ -199,6 +206,13 @@ class MyGame(object):
         
         img = self.gamefont.render("Final Score: %d"%self.score, True,\
                                   (255,255,255))
+        self.scores.append(self.score)
+        self.scores.sort(reverse = True)
+		
+        with open("scores.txt", "w") as myfile:
+            for i in self.scores:
+                myfile.write(str(i)+"\n")
+
         rect2 = img.get_rect()
         rect2.center = self.width//2, self.height - rect2.height
         self.screen.blit(img, rect2)
@@ -208,9 +222,9 @@ class MyGame(object):
         
         
         self.gameover.play()
-        delay = 2000
         self.bgm.stop()
-        pygame.time.set_timer(MyGame.RESTART, delay+2000)
+        
+        pygame.time.set_timer(MyGame.RESTART, 4000)
         
     
     def new_apple(self):
@@ -224,8 +238,7 @@ class MyGame(object):
         self.x /= 2
         self.timeout += 30
         self.new_apple()
-        self.quota += self.quota_inc
-        self.quota_inc += 48
+        self.quota *= 2
         self.level += 1
         
     def draw(self):
@@ -253,24 +266,31 @@ class MyGame(object):
             else: self.high_txt = self.gamefont.render('High Scores', 
                     True, (255,255,255))
             self.screen.blit(self.high_txt, self.hs)
+        
         elif self.state == MyGame.HIGHSCORES:
-            
-            
-            
-            self.retrect.bottom = self.height
-            self.myrect.center = (self.width//2,self.height//2)
-            if self.retrect.collidepoint(pygame.mouse.get_pos()):
-                self.sell = self.gamefont.render('Main Menu', 
+            self.scores.sort(reverse = True)
+            self.back_rect.bottom = self.height
+            x = 0
+            for i in self.scores:
+                score = self.score_font.render(str(i), True, (255,255,255))
+                b = score.get_rect()
+                b.center = (self.width//2,self.height//4+x)
+                self.screen.blit(score,b)
+                x += 50
+            if self.back_rect.collidepoint(pygame.mouse.get_pos()):
+                self.back = self.gamefont.render('Main Menu', 
                     True, (255,0,0))
-            else: self.sell = self.gamefont.render('Main Menu', 
+            else: self.back = self.gamefont.render('Main Menu', 
                     True, (255,255,255))
-            self.screen.blit(self.sell, self.retrect)
-            self.screen.blit(self.scores, self.myrect)
-         
+            self.screen.blit(self.back, self.back_rect)
+            
+
         else:
+            if pygame.mouse.get_pos()[0] >= 1:
+                self.pos = pygame.mouse.get_pos()[0]
             rect = self.basket.get_rect()
-            rect.center = (pygame.mouse.get_pos()[0], \
-                           self.height - rect.height/2)
+            rect.center = (self.pos, \
+                               self.height - rect.height/2)
             self.screen.blit(self.basket, rect)
 
             for apple in list(self.apples):
@@ -295,11 +315,10 @@ class MyGame(object):
                                       (255,255,255))
             rect2 = img.get_rect()
             self.screen.blit(img, rect2)
-            
             lev = self.gamefont.render("level: %d"%self.level, True, \
                                       (255,255,255))
             lev_rect = lev.get_rect()
-            lev_rect.center = self.width//2, lev_rect.height//2
+            lev_rect.center = self.width//2.5, lev_rect.height//2
             self.screen.blit(lev, lev_rect)
             
             many_left = self.quota - self.score
