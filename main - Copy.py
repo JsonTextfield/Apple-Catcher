@@ -67,7 +67,6 @@ class MyGame(object):
         self.basket = pygame.image.load("basket2.png")
         
         #load sounds
-        self.mew = False
         self.bgm = mixer.Sound("bgm.wav")
         self.basket_snd = mixer.Sound("basketed.wav")
         self.levelup = mixer.Sound("LevelUp.wav")
@@ -80,7 +79,6 @@ class MyGame(object):
         True, (255,255,255)) #button
         self.high_txt = self.gamefont.render('High Scores', 
         True, (255,255,255)) #hs title
-        self.mute_txt = self.gamefont.render("Mute", True, (255,255,255))
         
         self.start_time = pygame.time.get_ticks()
         self.state = MyGame.STARTING
@@ -96,7 +94,6 @@ class MyGame(object):
         
         self.recttext = self.playgame_txt.get_rect()
         self.hs = self.high_txt.get_rect() #hs's rectangle
-        self.mute = self.mute_txt.get_rect()
         self.title_rect = self.title.get_rect()
         
         
@@ -142,10 +139,6 @@ class MyGame(object):
         """Loop forever processing events"""
         running = True
         while running:
-            if self.mew:
-                mixer.pause()
-            else:
-                mixer.unpause()
             if mixer:
                 if mixer.music.get_busy() == False and self.state == MyGame.PLAYING:
                     if android:
@@ -176,11 +169,7 @@ class MyGame(object):
                 
             elif event.type == pygame.MOUSEBUTTONDOWN and self.hs.collidepoint(pygame.mouse.get_pos()) and self.state != MyGame.PLAYING:
                 self.state = MyGame.HIGHSCORES
-            
-            elif event.type == pygame.MOUSEBUTTONDOWN and self.mute.collidepoint(pygame.mouse.get_pos()):
-                self.mew = not self.mew
-                
-            
+               
             elif event.type == pygame.MOUSEBUTTONDOWN and self.back_rect.collidepoint(pygame.mouse.get_pos()):
                 self.state = MyGame.STARTING
                     
@@ -246,8 +235,9 @@ class MyGame(object):
                     current_string.append(chr(inkey))
                 display_box(question + ": " + string.join(current_string,""))
             return string.join(current_string,"")
-        if not self.mew:
-            self.gameover.play()
+        
+        
+        self.gameover.play()
         self.bgm.stop()
         name = ask("Enter your name")
         self.scores.append(str(self.score)+"    "+name)
@@ -279,9 +269,6 @@ class MyGame(object):
         """Update the display"""
         # everything we draw now is to a buffer that is not displayed
         self.screen.fill(self.bg_color)
-        self.mute.center = self.width-30,self.height-10
-        
-        
         
         if self.state == MyGame.STARTING:
             
@@ -400,13 +387,6 @@ class MyGame(object):
                     self.new_level()
 
         # flip buffers so that everything we have drawn gets displayed
-        if self.mute.collidepoint(pygame.mouse.get_pos()):
-            self.mute_txt = self.gamefont.render('Mute', 
-            True, (255,0,0))
-        else: 
-            self.mute_txt = self.gamefont.render('Mute', 
-            True, (255,255,255))
-        self.screen.blit(self.mute_txt, self.mute)
         pygame.display.flip()
 try:
     import android

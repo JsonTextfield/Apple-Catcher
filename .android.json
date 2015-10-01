@@ -1,0 +1,1 @@
+{"orientation": "portrait", "include_pil": false, "expansion": false, "icon_name": "AppCat", "include_sqlite": false, "permissions": ["INTERNET"], "layout": "internal", "name": "Apple Catcher", "package": "com.tehblackboy.appcat", "source": false, "version": "1.4", "numeric_version": "105"}
